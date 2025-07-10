@@ -1,5 +1,4 @@
-Cliento is a simple client portal for freelancers and small businesses.
-It helps you manage your projects, share progress with clients, and handle invoices — all in one place.
+Cliento is a simple client portal for freelancers and small businesses. It's a tool I needed for my own freelance work, so I built it.
 
 🚀 Features
 - 🔒 Secure authentication (NextAuth.js)
