@@ -1,9 +1,9 @@
-    import NextAuth from "next-auth";
+import NextAuth from "next-auth";
 import GithubProvider from "next-auth/providers/github";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { MongoClient, ServerApiVersion } from 'mongodb';
 
-const uri = "mongodb+srv://sab:sabdatabase@practice.kt5d0mh.mongodb.net/?retryWrites=true&w=majority&appName=practice";
+const uri = process.env.MONGODB_URI || "mongodb+srv://sab:sabdatabase@practice.kt5d0mh.mongodb.net/?retryWrites=true&w=majority&appName=practice";
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -15,7 +15,7 @@ const client = new MongoClient(uri, {
 });
 
 
-export const authOptions = {
+const handler = NextAuth({
   providers: [
     GithubProvider({
         clientId: process.env.GITHUB_ID ?? "",
@@ -74,8 +74,6 @@ export const authOptions = {
     }), 
   ],
   secret: process.env.NEXTAUTH_SECRET,
-};
-
-export const handler = NextAuth(authOptions);
+});
 
 export { handler as GET, handler as POST };

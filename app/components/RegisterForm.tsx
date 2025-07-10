@@ -9,7 +9,7 @@ export default function RegisterForm() {
     password: '',
     confirmPassword: ''
   });
-  const [error, setError] = useState('');
+  const [error, setError] = useState<string>('');
   const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
