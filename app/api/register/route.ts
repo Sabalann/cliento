@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { MongoClient, ServerApiVersion } from 'mongodb';
 
-const uri = "mongodb+srv://sab:sabdatabase@practice.kt5d0mh.mongodb.net/?retryWrites=true&w=majority&appName=practice";
+const uri = process.env.MONGODB_URI || "mongodb+srv://sab:sabdatabase@practice.kt5d0mh.mongodb.net/?retryWrites=true&w=majority&appName=practice";
 
 const client = new MongoClient(uri, {
   serverApi: {
@@ -12,8 +12,11 @@ const client = new MongoClient(uri, {
 });
 
 export async function POST(request: NextRequest) {
+  console.log('Registration request received');
+  
   try {
     const { username, email, password, confirmPassword } = await request.json();
+    console.log('Request data:', { username, email, password: '***', confirmPassword: '***' });
 
     // Validate input
     if (!username || !email || !password || !confirmPassword) {
@@ -38,9 +41,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Connect to MongoDB
+    console.log('Connecting to MongoDB...');
     await client.connect();
+    console.log('Connected to MongoDB');
+    
     const database = client.db("practice");
     const users = database.collection("users");
+    console.log('Accessing users collection');
 
     // Check if username already exists
     const existingUser = await users.findOne({ username });
@@ -80,11 +87,32 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Registration error:', error);
+    
+    // Provide more specific error messages
+    if (error instanceof Error) {
+      if (error.message.includes('ECONNREFUSED') || error.message.includes('ENOTFOUND')) {
+        return NextResponse.json(
+          { error: 'Database connection failed' },
+          { status: 500 }
+        );
+      }
+      if (error.message.includes('MongoServerError')) {
+        return NextResponse.json(
+          { error: 'Database operation failed' },
+          { status: 500 }
+        );
+      }
+    }
+    
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     );
   } finally {
-    await client.close();
+    try {
+      await client.close();
+    } catch (closeError) {
+      console.error('Error closing connection:', closeError);
+    }
   }
 } 
