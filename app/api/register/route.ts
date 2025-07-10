@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
     const newUser = {
       username,
       email,
-      password: Number(password), // Store as number to match existing format
+      password: password, // Store as string to support all characters
       createdAt: new Date()
     };
 

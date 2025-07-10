@@ -4,6 +4,10 @@ import { MongoClient, ServerApiVersion } from 'mongodb';
 
 const uri = process.env.MONGODB_URI || "mongodb+srv://sab:sabdatabase@practice.kt5d0mh.mongodb.net/?retryWrites=true&w=majority&appName=practice";
 
+if (!uri) {
+  throw new Error('Please define the MONGODB_URI environment variable');
+}
+
 const client = new MongoClient(uri, {
   serverApi: {
     version: ServerApiVersion.v1,
@@ -45,7 +49,7 @@ export const authOptions = {
                 const user = await users.findOne({ username: credentials.username });
                 console.log("Found user:", user);
                 
-                if (user && String(user.password) === credentials.password) {
+                if (user && user.password === credentials.password) {
                     console.log("Password matches, returning user");
                     return {
                         id: user._id.toString(),
@@ -62,10 +66,17 @@ export const authOptions = {
                 return null;
             } catch (error) {
                 console.error("Database authentication error:", error);
+                if (error instanceof Error) {
+                    console.error("Error details:", error.message);
+                }
                 return null;
             } finally {
-                // Close the connection
-                await client.close();
+                try {
+                    // Close the connection
+                    await client.close();
+                } catch (closeError) {
+                    console.error("Error closing connection:", closeError);
+                }
             }
         },
     }), 
