@@ -1,5 +1,4 @@
 import { getServerSession } from "next-auth";
-import RegisterForm from './components/RegisterForm';
 
 export default async function Home() {
   const session = await getServerSession();
