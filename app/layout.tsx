@@ -31,8 +31,8 @@ export default async function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <SessionProvider session={session}>
-          <main className="mx-auto max-w-5xl text-2xl flex gap-2">
-            <NavMenu />
+          <main className=" text-2xl flex flex-col">
+            <NavMenu/>
             {children}
           </main>
         </SessionProvider>

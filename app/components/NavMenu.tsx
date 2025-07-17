@@ -8,16 +8,16 @@ function AuthButton() {
     if (session) {
         return (
             <>
-                <p>Signed in as {session.user?.name}</p>
-                <button onClick={() => signOut()}>Sign out</button>
+                <p>Aangemeld als {session.user?.name}</p>
+                <button className="pointer-cursor" onClick={() => signOut()}>Log uit</button>
             </>
         );
     }
     return (
         <>
-            <p>You are not signed in</p>
-            <button onClick={() => signIn()}>Sign in</button>
-            <Link href="/register">Register</Link>
+            <p>Je bent niet aangemeld</p>
+            <button className="hover:pointer-cursor" onClick={() => signIn()}>Log in</button>
+            <Link href="/register">Registreer</Link>
 
         </>
     );
@@ -25,7 +25,7 @@ function AuthButton() {
 
 export default function NavMenu() {
     return (
-        <div>
+        <div className="max-w bg-[#7867ea]">
             <AuthButton />
         </div>
     );
