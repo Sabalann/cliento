@@ -1,32 +1,38 @@
 "use client";
-import Link from "next/link";
 import { signIn, signOut, useSession } from "next-auth/react";
+import { Button } from "@/components/ui/button"
+
 
 function AuthButton() {
-    const { data: session } = useSession();
+  const { data: session } = useSession();
 
     if (session) {
         return (
             <>
-                <p>Aangemeld als {session.user?.name}</p>
-                <button className="pointer-cursor" onClick={() => signOut()}>Log uit</button>
             </>
         );
     }
     return (
         <>
-            <p>Je bent niet aangemeld</p>
-            <button className="hover:pointer-cursor" onClick={() => signIn()}>Log in</button>
-            <Link href="/register">Registreer</Link>
+            <Button asChild variant="ghost" size="sm" className="text-sm" onClick={() => signIn()}>
+              <a href="#">Log in</a>
+            </Button>
+            <Button asChild size="sm" className="text-sm">
+            <a href="register">Registreer</a>
+            </Button>
 
         </>
     );
 }
 
 export default function NavMenu() {
-    return (
-        <div className="max-w bg-[#7867ea]">
-            <AuthButton />
+
+  return (
+    <header className=" px-4 md:px-6 full-w">
+        {/* Right side */}
+        <div className="flex items-center gap-2 justify-end">
+          <AuthButton />
         </div>
-    );
+    </header>
+  )
 }

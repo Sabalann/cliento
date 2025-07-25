@@ -5,8 +5,8 @@ export default async function Home() {
   const session = await getServerSession(authOptions);
   
   return (
-    <div className="min-h-screen bg-gray-50 py-12 content-center justify-center">
-      <div className="max-w-md flex flex-col">
+    <div className="min-h-screen bg-gray-50 py-12 content-center">
+      <div className="max-w-md flex flex-col mx-auto">
         <div className="max-w-3xl">
           <h1 className="text-4xl md:text-5xl font-bold text-[#2D2D2D] mb-6">
             Projecten delen. Klanten betrekken.
