@@ -92,20 +92,20 @@ export async function POST(request: NextRequest) {
     if (error instanceof Error) {
       if (error.message.includes('ECONNREFUSED') || error.message.includes('ENOTFOUND')) {
         return NextResponse.json(
-          { error: 'Database connection failed' },
+          { error: 'Databaseverbinding mislukt' },
           { status: 500 }
         );
       }
       if (error.message.includes('MongoServerError')) {
         return NextResponse.json(
-          { error: 'Database operation failed' },
+          { error: 'Databasebewerking mislukt' },
           { status: 500 }
         );
       }
     }
     
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Interne serverfout' },
       { status: 500 }
     );
   } finally {

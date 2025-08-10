@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { Button } from "@/components/ui/button";
+import { motion } from "motion/react";
 
 export default function RegisterForm() {
   const [formData, setFormData] = useState({
@@ -38,7 +40,7 @@ export default function RegisterForm() {
       const data = await response.json();
 
       if (response.ok) {
-        setSuccess('Registration successful! You can now login.');
+        setSuccess('Registratie gelukt! Je kunt nu inloggen.');
         setFormData({
           username: '',
           email: '',
@@ -46,25 +48,22 @@ export default function RegisterForm() {
           confirmPassword: ''
         });
       } else {
-        setError(data.error || 'Registration failed');
+        setError(data.error || 'Registratie mislukt');
       }
     } catch (error) {
-      setError('An error occurred during registration');
+      setError('Er is een fout opgetreden tijdens de registratie');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="max-w-md mx-auto mt-8 p-6 bg-white rounded-lg shadow-md">
-      <h2 className="text-2xl font-bold mb-6 text-center">Register</h2>
-      
+    <div>
       {error && (
         <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
           {error}
         </div>
       )}
-      
       {success && (
         <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded">
           {success}
@@ -73,8 +72,8 @@ export default function RegisterForm() {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
-            Username
+          <label htmlFor="username" className="block text-sm font-medium text-white/90 mb-1">
+            Gebruikersnaam
           </label>
           <input
             type="text"
@@ -83,14 +82,14 @@ export default function RegisterForm() {
             value={formData.username}
             onChange={handleChange}
             required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Enter username"
+            className="w-full px-3 py-2 border border-white/20 bg-white/10 text-white placeholder:text-white/60 rounded-md focus:outline-none focus:ring-2 focus:ring-white/30"
+            placeholder=""
           />
         </div>
 
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-            Email
+          <label htmlFor="email" className="block text-sm font-medium text-white/90 mb-1">
+            E-mailadres
           </label>
           <input
             type="email"
@@ -99,14 +98,14 @@ export default function RegisterForm() {
             value={formData.email}
             onChange={handleChange}
             required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Enter email"
+            className="w-full px-3 py-2 border border-white/20 bg-white/10 text-white placeholder:text-white/60 rounded-md focus:outline-none focus:ring-2 focus:ring-white/30"
+            placeholder=""
           />
         </div>
 
         <div>
-          <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-            Password
+          <label htmlFor="password" className="block text-sm font-medium text-white/90 mb-1">
+            Wachtwoord
           </label>
           <input
             type="password"
@@ -116,14 +115,14 @@ export default function RegisterForm() {
             onChange={handleChange}
             required
             minLength={6}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Enter password"
+            className="w-full px-3 py-2 border border-white/20 bg-white/10 text-white placeholder:text-white/60 rounded-md focus:outline-none focus:ring-2 focus:ring-white/30"
+            placeholder=""
           />
         </div>
 
         <div>
-          <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
-            Confirm Password
+          <label htmlFor="confirmPassword" className="block text-sm font-medium text-white/90 mb-1">
+            Bevestig wachtwoord
           </label>
           <input
             type="password"
@@ -132,18 +131,22 @@ export default function RegisterForm() {
             value={formData.confirmPassword}
             onChange={handleChange}
             required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Confirm password"
+            className="w-full px-3 py-2 border border-white/20 bg-white/10 text-white placeholder:text-white/60 rounded-md focus:outline-none focus:ring-2 focus:ring-white/30"
+            placeholder=""
           />
         </div>
 
-        <button
+        <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
+
+        
+        <Button
           type="submit"
           disabled={isLoading}
-          className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full"
         >
-          {isLoading ? 'Registering...' : 'Register'}
-        </button>
+          {isLoading ? 'Bezig met registreren...' : 'Registreren'}
+        </Button>
+        </motion.div>
       </form>
     </div>
   );
