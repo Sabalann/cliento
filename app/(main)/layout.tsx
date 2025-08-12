@@ -2,8 +2,15 @@ import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/s
 import { AppSidebar } from "@/components/app-sidebar";
 import NavMenu from "@/app/components/NavMenu";
 import { Separator } from "@/components/ui/separator";
+import { getServerSession } from "next-auth";
+import { redirect } from "next/navigation";
+import { authOptions } from "@/app/lib/auth";
 
-export default function MainLayout({ children }: { children: React.ReactNode }) {
+export default async function MainLayout({ children }: { children: React.ReactNode }) {
+  const session = await getServerSession(authOptions);
+  if (!session || !session.user) {
+    redirect("/auth/signin");
+  }
   return (
     <SidebarProvider>
       <AppSidebar />

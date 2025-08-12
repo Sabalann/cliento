@@ -23,7 +23,7 @@ export default function SignInPage() {
     try {
       const result = await signIn("credentials", {
         redirect: true,
-        callbackUrl: "/",
+        callbackUrl: "/dashboard",
         username,
         password,
       });
@@ -119,7 +119,7 @@ export default function SignInPage() {
             <Button
               variant="default"
               className="w-full bg-black text-white hover:bg-black/90"
-              onClick={() => signIn("github", { callbackUrl: "/" })}
+              onClick={() => signIn("github", { callbackUrl: "/dashboard" })}
             >
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4 mr-2">
                 <path fillRule="evenodd" d="M12 2C6.477 2 2 6.486 2 12.018c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.482 0-.237-.009-.866-.014-1.7-2.782.605-3.369-1.343-3.369-1.343-.454-1.155-1.11-1.463-1.11-1.463-.908-.62.069-.607.069-.607 1.004.07 1.532 1.032 1.532 1.032.892 1.53 2.341 1.088 2.91.833.091-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.987 1.029-2.688-.103-.253-.447-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844c.85.004 1.705.115 2.504.337 1.909-1.297 2.748-1.026 2.748-1.026.547 1.378.203 2.397.1 2.65.64.701 1.027 1.595 1.027 2.688 0 3.848-2.339 4.695-4.566 4.944.359.31.678.922.678 1.859 0 1.34-.012 2.42-.012 2.75 0 .268.18.58.688.481A10.02 10.02 0 0 0 22 12.018C22 6.486 17.523 2 12 2Z" clipRule="evenodd" />

@@ -15,11 +15,11 @@ export async function POST(request: NextRequest) {
   console.log('Registration request received');
   
   try {
-    const { username, email, password, confirmPassword } = await request.json();
-    console.log('Request data:', { username, email, password: '***', confirmPassword: '***' });
+    const { username, email, password, confirmPassword, role } = await request.json();
+    console.log('Request data:', { username, email, role, password: '***', confirmPassword: '***' });
 
     // Validate input
-    if (!username || !email || !password || !confirmPassword) {
+    if (!username || !email || !password || !confirmPassword || !role) {
       return NextResponse.json(
         { error: 'All fields are required' },
         { status: 400 }
@@ -72,6 +72,14 @@ export async function POST(request: NextRequest) {
       username,
       email,
       password: password, // Store as string to support all characters
+      role,
+      companyName: '',
+      BTWNumber: '',
+      KVKNumber: '',
+      postalCode: '',
+      city: '',
+      country: '',
+      phoneNumber: '',
       createdAt: new Date()
     };
 

@@ -9,13 +9,24 @@ export default function RegisterForm() {
     username: '',
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    role: '', // 'klant' | 'developer'
+
+    companyName: '',
+    BTWNumber: '',
+    KVKNumber: '',
+    postalCode: '',
+    city: '',
+    country: '',
+
+    phoneNumber: '',
+
   });
   const [error, setError] = useState<string>('');
   const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
@@ -45,7 +56,17 @@ export default function RegisterForm() {
           username: '',
           email: '',
           password: '',
-          confirmPassword: ''
+          confirmPassword: '',
+          role: '',
+
+          companyName: '',
+          BTWNumber: '',
+          KVKNumber: '',
+          postalCode: '',
+          city: '',
+          country: '',
+      
+          phoneNumber: '',
         });
       } else {
         setError(data.error || 'Registratie mislukt');
@@ -85,6 +106,24 @@ export default function RegisterForm() {
             className="w-full px-3 py-2 border border-white/20 bg-white/10 text-white placeholder:text-white/60 rounded-md focus:outline-none focus:ring-2 focus:ring-white/30"
             placeholder=""
           />
+        </div>
+
+        <div>
+          <label htmlFor="role" className="block text-sm font-medium text-white/90 mb-1">
+            Ik ben
+          </label>
+          <select
+            id="role"
+            name="role"
+            value={formData.role}
+            onChange={handleChange}
+            required
+            className="w-full px-3 py-2 border border-white/20 bg-white/10 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-white/30"
+          >
+            <option value="" className="text-black">Maak een keuze</option>
+            <option value="klant" className="text-black">Klant</option>
+            <option value="developer" className="text-black">Developer</option>
+          </select>
         </div>
 
         <div>

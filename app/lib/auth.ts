@@ -56,6 +56,7 @@ export const authOptions: NextAuthOptions = {
                         id: user._id.toString(),
                         name: user.username,
                         email: user.email || `${user.username}@example.com`,
+                        role: user.role || 'developer',
                     };
                 } else {
                     console.log("User not found or password doesn't match");
@@ -85,5 +86,19 @@ export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
   pages: {
     signIn: "/auth/signin",
+  },
+  callbacks: {
+    async jwt({ token, user }) {
+      if (user && (user as any).role) {
+        (token as any).role = (user as any).role;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      if (session.user) {
+        (session.user as any).role = (token as any).role || (session.user as any).role;
+      }
+      return session;
+    },
   },
 }; 
