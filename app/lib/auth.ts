@@ -46,17 +46,25 @@ export const authOptions: NextAuthOptions = {
                 const database = client.db("practice");
                 const users = database.collection("users");
                 
-                // Find user by username
-                const user = await users.findOne({ username: credentials.username });
+                // Find user by username or email
+                const identifier = credentials.username.trim();
+                const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+                const regex = new RegExp(`^${esc(identifier)}$`, 'i');
+                const query = identifier.includes("@")
+                  ? { email: { $regex: regex } }
+                  : { username: { $regex: regex } };
+                const user = await users.findOne(query);
                 console.log("Found user:", user);
                 
-                if (user && user.password === credentials.password) {
+                const inputPassword = String(credentials.password).trim();
+                if (user && String(user.password) === inputPassword) {
                     console.log("Password matches, returning user");
                     return {
                         id: user._id.toString(),
                         name: user.username,
                         email: user.email || `${user.username}@example.com`,
                         role: user.role || 'developer',
+                        image: user.image || '',
                     };
                 } else {
                     console.log("User not found or password doesn't match");
@@ -92,11 +100,17 @@ export const authOptions: NextAuthOptions = {
       if (user && (user as any).role) {
         (token as any).role = (user as any).role;
       }
+      if (user && (user as any).image !== undefined) {
+        (token as any).image = (user as any).image;
+      }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
         (session.user as any).role = (token as any).role || (session.user as any).role;
+        if ((token as any).image !== undefined) {
+          (session.user as any).image = (token as any).image;
+        }
       }
       return session;
     },
