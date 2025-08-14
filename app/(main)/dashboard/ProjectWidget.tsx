@@ -48,7 +48,7 @@ export default function ProjectWidget() {
         <ul className="space-y-2">
           {projects.map((p) => (
             <li key={p._id} className="rounded-md border p-2 flex items-center justify-between">
-              <span className="font-medium">{p.name}</span>
+              <a href={`/projects/${p._id}`} className="font-medium hover:underline">{p.name}</a>
               <span className="text-xs text-muted-foreground">{new Date(p.createdAt).toLocaleDateString()}</span>
             </li>
           ))}

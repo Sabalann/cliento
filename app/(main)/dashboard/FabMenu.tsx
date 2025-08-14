@@ -35,6 +35,11 @@ export default function FabMenu({ user }: { user: SessionUser }) {
       if (!res.ok) throw new Error(data?.error || 'Aanmaken mislukt');
       setProjectName('');
       setShowProjectDialog(false);
+      // Redirect to detail page right away
+      if (data?.projectId) {
+        window.location.href = `/projects/${data.projectId}`;
+        return;
+      }
       window.dispatchEvent(new Event('project:created'));
     } catch (e) {
       // noop; optionally show toast
