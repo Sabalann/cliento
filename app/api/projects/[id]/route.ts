@@ -144,7 +144,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         text: String(body.newNote?.text || ''),
         date: new Date(),
       };
-      await projects.updateOne({ _id }, { $push: { notes: newNote }, $set: { lastUpdated: new Date() } });
+      await projects.updateOne({ _id }, { $push: { notes: newNote } as any, $set: { lastUpdated: new Date() } });
       return NextResponse.json({ message: 'Notitie toegevoegd' });
     }
 
