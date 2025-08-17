@@ -5,8 +5,8 @@ import { useEffect, useState } from 'react';
 type Project = {
   _id: string;
   name: string;
-  developerId: string;
-  customerId: string;
+  status: string;
+  deadline: string | null;
   createdAt: string;
 };
 
@@ -47,9 +47,26 @@ export default function ProjectWidget() {
       ) : (
         <ul className="space-y-2">
           {projects.map((p) => (
-            <li key={p._id} className="rounded-md border p-2 flex items-center justify-between">
-              <a href={`/projects/${p._id}`} className="font-medium hover:underline">{p.name}</a>
-              <span className="text-xs text-muted-foreground">{new Date(p.createdAt).toLocaleDateString()}</span>
+            <li key={p._id}>
+              <a href={`/projects/${p._id}`} className="block rounded-md border p-3 hover:bg-gray-50 transition-colors">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="font-medium">{p.name}</span>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    p.status === 'completed' ? 'bg-green-100 text-green-800' :
+                    p.status === 'in_progress' ? 'bg-blue-100 text-blue-800' :
+                    p.status === 'on_hold' ? 'bg-yellow-100 text-yellow-800' :
+                    'bg-gray-100 text-gray-800'
+                  }`}>
+                    {p.status === 'open' && 'Open'}
+                    {p.status === 'in_progress' && 'In Progress'}
+                    {p.status === 'completed' && 'Voltooid'}
+                    {p.status === 'on_hold' && 'On Hold'}
+                  </span>
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {p.deadline ? `Deadline: ${new Date(p.deadline).toLocaleDateString()}` : 'Geen deadline'}
+                </div>
+              </a>
             </li>
           ))}
         </ul>

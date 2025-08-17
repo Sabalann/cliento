@@ -9,7 +9,7 @@ export default function NewProjectPage() {
   const [name, setName] = useState("");
   const [status, setStatus] = useState("open");
   const [deadline, setDeadline] = useState<string>("");
-  const [budget, setBudget] = useState<string>("");
+
   const [assignedDevelopers, setAssignedDevelopers] = useState<string[]>([]);
   const [clientId, setClientId] = useState<string>("");
   const [milestones, setMilestones] = useState<any[]>([]);
@@ -52,7 +52,7 @@ export default function NewProjectPage() {
           name,
           status,
           deadline: deadline || undefined,
-          budget: budget ? Number(budget) : undefined,
+
           assignedDevelopers,
           clientId,
           milestones,
@@ -80,11 +80,7 @@ export default function NewProjectPage() {
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
-              <BreadcrumbLink href="/projects">Projecten</BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbPage>Nieuw</BreadcrumbPage>
+              <BreadcrumbPage>Nieuw Project</BreadcrumbPage>
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
@@ -109,16 +105,10 @@ export default function NewProjectPage() {
           </select>
         </label>
 
-        <div className="grid grid-cols-2 gap-4">
-          <label className="grid gap-1">
-            <span className="text-sm">Deadline</span>
-            <input type="date" className="border rounded-md p-2" value={deadline} onChange={(e) => setDeadline(e.target.value)} />
-          </label>
-          <label className="grid gap-1">
-            <span className="text-sm">Budget</span>
-            <input type="number" className="border rounded-md p-2" value={budget} onChange={(e) => setBudget(e.target.value)} />
-          </label>
-        </div>
+        <label className="grid gap-1">
+          <span className="text-sm">Deadline</span>
+          <input type="date" className="border rounded-md p-2" value={deadline} onChange={(e) => setDeadline(e.target.value)} />
+        </label>
 
         <label className="grid gap-1">
           <span className="text-sm">Klant</span>

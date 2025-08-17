@@ -39,7 +39,13 @@ export async function GET() {
 
     let query: any = {};
     if (role === 'developer') {
-      query = { assignedDevelopers: { $in: [ userId ] } };
+      // Include projects where user is in assignedDevelopers OR projects they created (fallback)
+      query = { 
+        $or: [
+          { assignedDevelopers: { $in: [ userId ] } },
+          { createdBy: userId }
+        ]
+      };
     } else if (role === 'klant') {
       query = { clientId: userId };
     }
@@ -133,9 +139,9 @@ export async function POST(request: NextRequest) {
       name: name.trim(),
       status,
       deadline: deadline ? new Date(deadline) : null,
-      budget: typeof budget === 'number' ? budget : budget ? Number(budget) : null,
       assignedDevelopers: devIds,
       clientId: clientObjectId,
+      createdBy: userDoc._id as ObjectId, // Track who created the project
       milestones: Array.isArray(milestones)
         ? milestones.map((m: any) => ({
             title: String(m?.title || ''),
