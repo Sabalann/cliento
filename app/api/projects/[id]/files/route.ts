@@ -63,12 +63,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     // Append file entry to project
     const fileEntry = {
-      _id: fileId,
       filename: file.name,
       url: `/api/projects/${id}/files/${fileId.toString()}`,
       uploadedAt: new Date(),
     }
-    await projects.updateOne({ _id }, { $push: { files: fileEntry }, $set: { lastUpdated: new Date() } })
+    await projects.updateOne(
+      { _id }, 
+      { $push: { files: fileEntry }, $set: { lastUpdated: new Date() } } as any
+    )
 
     return NextResponse.json({ message: 'Bestand geüpload', file: fileEntry })
   } catch (err) {
