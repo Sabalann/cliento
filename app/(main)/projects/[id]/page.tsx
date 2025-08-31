@@ -91,6 +91,15 @@ export default function ProjectDetailPage() {
     return nameChanged || statusChanged || deadlineChanged || budgetChanged || clientChanged || hasNewNote;
   }
 
+  function canSaveChanges() {
+    if (!data) return false;
+    
+    // Prevent saving if name is empty or only whitespace
+    if (!data.name || data.name.trim() === '') return false;
+    
+    return hasDataChanged();
+  }
+
   async function saveChanges() {
     setSaving(true);
     setError("");
@@ -236,7 +245,7 @@ export default function ProjectDetailPage() {
 
   const isPopulatedClient = data?.clientId && typeof data.clientId === 'object';
   const clientName = isPopulatedClient ? (data.clientId.username || data.clientId.name || data.clientId.email) : '';
-  const canSave = hasDataChanged();
+  const canSave = canSaveChanges();
   const isClient = ((session?.user as any)?.role) === 'klant';
   
 
@@ -264,6 +273,7 @@ export default function ProjectDetailPage() {
             className="text-2xl font-semibold border-none outline-none bg-transparent" 
             value={data.name || ''} 
             onChange={(e) => updateData('name', e.target.value)}
+            placeholder="Project naam (verplicht)"
           />
         )}
         <div className="flex items-center gap-2">
@@ -337,51 +347,51 @@ export default function ProjectDetailPage() {
               {data.deadline ? new Date(data.deadline).toLocaleDateString() : 'Geen deadline'}
             </div>
           ) : (
-            <input type="date" className="border rounded-md p-1" value={data.deadline ? new Date(data.deadline).toISOString().slice(0,10) : ''} onChange={(e) => updateData('deadline', e.target.value)} />
+            <input type="date" className="border rounded-md p-1 w-full" value={data.deadline ? new Date(data.deadline).toISOString().slice(0,10) : ''} onChange={(e) => updateData('deadline', e.target.value)} />
           )}
         </div>
       </div>
 
-      {/* Invoice section - only show if project has client and required data */}
-      {data.clientId && (
-        <div className="border rounded-md p-4 bg-gradient-to-r from-blue-50 to-indigo-50">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-semibold text-blue-900">Factuur</h3>
-              <p className="text-sm text-blue-700">
-                Genereer een PDF factuur voor dit project
-                {data.budget && ` (Bedrag: €${data.budget})`}
-              </p>
-            </div>
-            <button
-              onClick={downloadInvoice}
-              disabled={generatingInvoice}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-            >
-              {generatingInvoice ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  Genereren...
-                </>
-              ) : (
-                <>
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                  Download Factuur
-                </>
-              )}
-            </button>
-          </div>
-        </div>
-      )}
+
 
       <div className="space-y-2">
         <div 
           className="flex items-center justify-between cursor-pointer" 
           onClick={() => setShowImages(!showImages)}
         >
-          <div className="text-lg font-semibold">Bestanden ({(data.files || []).length})</div>
+          <div className="flex items-center gap-3">
+            <div className="text-lg font-semibold">Bestanden ({(data.files || []).length})</div>
+            <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+              <input 
+                type="file"
+                accept="image/*"
+                className="hidden"
+                id="files"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  
+                  try {
+                    setUploading(true);
+                    setError("");
+                    const form = new FormData();
+                    form.append('file', file);
+                    const res = await fetch(`/api/projects/${id}/files`, { method: 'POST', body: form });
+                    const json = await res.json();
+                    if (!res.ok) throw new Error(json?.error || 'Upload mislukt');
+                    await load();
+                  } catch (e: any) {
+                    setError(e.message);
+                  } finally {
+                    setUploading(false);
+                  }
+                }}
+              />
+              <label htmlFor="files" className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm cursor-pointer">
+                {uploading ? 'Uploaden...' : 'Upload bestand'}
+              </label>
+            </div>
+          </div>
           <div className="text-sm text-gray-500">
             {showImages ? '▼ Verbergen' : '▶ Tonen'}
           </div>
@@ -438,35 +448,7 @@ export default function ProjectDetailPage() {
           </>
         )}
         
-        <div className="border rounded-md p-3 bg-gray-50">
-          <div className="text-sm font-medium mb-2">Nieuw bestand uploaden</div>
-          <div className="flex items-center gap-2">
-            <input 
-              type="file"
-              accept="image/*"
-              onChange={async (e) => {
-                const file = e.target.files?.[0];
-                if (!file) return;
-                
-                try {
-                  setUploading(true);
-                  setError("");
-                  const form = new FormData();
-                  form.append('file', file);
-                  const res = await fetch(`/api/projects/${id}/files`, { method: 'POST', body: form });
-                  const json = await res.json();
-                  if (!res.ok) throw new Error(json?.error || 'Upload mislukt');
-                  await load();
-                } catch (e: any) {
-                  setError(e.message);
-                } finally {
-                  setUploading(false);
-                }
-              }}
-            />
-            {uploading && <span className="text-sm text-gray-600">Uploaden...</span>}
-          </div>
-        </div>
+
       </div>
 
 
@@ -510,9 +492,6 @@ export default function ProjectDetailPage() {
                 </div>
               );
             })}
-            {(data.notes || []).length === 0 && (
-              <div className="text-sm text-gray-500 text-center py-4">Geen notities</div>
-            )}
             <div className="grid gap-2">
               <textarea 
                 className="border rounded p-2" 
@@ -525,6 +504,40 @@ export default function ProjectDetailPage() {
           </div>
         )}
       </div>
+
+      {/* Invoice section - only show if project has client and required data */}
+      {data.clientId && (
+        <div className="border rounded-md p-4 bg-gradient-to-r from-blue-50 to-indigo-50">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-blue-900">Factuur</h3>
+              <p className="text-sm text-blue-700">
+                Genereer een PDF factuur voor dit project
+                {data.budget && ` (Bedrag: €${data.budget})`}
+              </p>
+            </div>
+            <button
+              onClick={downloadInvoice}
+              disabled={generatingInvoice}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              {generatingInvoice ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  Genereren...
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Download Factuur
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Save & Delete actions */}
       <div className="flex items-center justify-end gap-2 pt-4">
