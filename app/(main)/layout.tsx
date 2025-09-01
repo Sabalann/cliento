@@ -1,33 +1,55 @@
-import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/app-sidebar";
-import NavMenu from "@/app/components/NavMenu";
-import { Separator } from "@/components/ui/separator";
-import { getServerSession } from "next-auth";
-import { redirect } from "next/navigation";
-import { authOptions } from "@/app/lib/auth";
+"use client";
 
-export default async function MainLayout({ children }: { children: React.ReactNode }) {
-  const session = await getServerSession(authOptions);
-  if (!session || !session.user) {
-    redirect("/auth/signin");
-  }
-  return (
-    <SidebarProvider>
-      <AppSidebar />
-      <SidebarInset>
-        <header className="flex justify-between h-16 shrink-0 items-center gap-2 border-b px-4">
-          <div className="flex items-center gap-1">
-            <SidebarTrigger className="-ml-1" />
-            <Separator orientation="vertical" className="mr-2 data-[orientation=vertical]:h-4" />
-          </div>
-          <NavMenu />
-        </header>
-        <div className="flex flex-1 flex-col gap-4 p-4">
-          <main className="text-2xl flex flex-col w-full">{children}</main>
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import DarkVeil from "@/app/components/DarkVeil";
+
+export default function MainLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === "loading") return; // Still loading
+    if (!session) {
+      router.push("/auth/signin");
+      return;
+    }
+  }, [session, status, router]);
+
+  if (status === "loading") {
+    return (
+      <div className="relative min-h-screen w-full flex items-center justify-center">
+        <div className="absolute inset-0 -z-10" style={{ width: '100%', height: '100%' }}>
+          <DarkVeil />
         </div>
-      </SidebarInset>
-    </SidebarProvider>
+        <div className="text-white">Laden...</div>
+      </div>
+    );
+  }
+
+  if (!session) {
+    return null; // Redirecting
+  }
+
+  return (
+    <div className="relative min-h-screen w-full">
+      <div className="absolute inset-0 -z-10" style={{ width: '100%', height: '100%' }}>
+        <DarkVeil />
+      </div>
+      <div className="relative z-10">
+        {children}
+      </div>
+    </div>
   );
 }
+
+
+
+
 
 

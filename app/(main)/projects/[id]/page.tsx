@@ -1,10 +1,13 @@
 "use client";
+
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { useSession } from "next-auth/react";
+import { motion, AnimatePresence } from "motion/react";
+import { ChevronLeft } from "lucide-react";
 
 export default function ProjectDetailPage() {
   const params = useParams();
@@ -24,26 +27,54 @@ export default function ProjectDetailPage() {
   const [showNotes, setShowNotes] = useState(true);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [generatingInvoice, setGeneratingInvoice] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   async function load() {
+    if (!session?.user) {
+      console.log('No session available, skipping project load');
+      return;
+    }
+    
     setLoading(true);
+    setError("");
     try {
-      const res = await fetch(`/api/projects/${id}`, { cache: 'no-store' });
+      console.log('Loading project with ID:', id);
+      const res = await fetch(`/api/projects/${id}`, { 
+        cache: 'no-store',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+      
+      console.log('Response status:', res.status);
       const json = await res.json();
-      if (!res.ok) throw new Error(json?.error || 'Kon project niet ophalen');
+      console.log('Response data:', json);
+      
+      if (!res.ok) {
+        throw new Error(json?.error || `HTTP ${res.status}: Kon project niet ophalen`);
+      }
+      
+      if (!json.project) {
+        throw new Error('Project data ontbreekt in response');
+      }
+      
       setData(json.project);
       setOriginalData(JSON.parse(JSON.stringify(json.project))); // Deep copy for comparison
     } catch (e: any) {
-      setError(e.message);
+      console.error('Error loading project:', e);
+      setError(e.message || 'Onbekende fout bij het laden van project');
     } finally {
       setLoading(false);
     }
   }
 
   useEffect(() => { 
-    if (id) load(); 
-    loadClients();
-  }, [id]);
+    if (id && sessionStatus !== 'loading' && session?.user) {
+      console.log('Session ready, loading project and clients');
+      load(); 
+      loadClients();
+    }
+  }, [id, sessionStatus, session?.user]);
 
   async function loadCurrentUser() {
     if (!session?.user) return;
@@ -116,8 +147,6 @@ export default function ProjectDetailPage() {
       if (newNote.trim()) {
         updateData.newNote = { text: newNote.trim() };
       }
-
-
 
       const res = await fetch(`/api/projects/${id}`, {
         method: 'PATCH',
@@ -204,6 +233,28 @@ export default function ProjectDetailPage() {
     }
   }
 
+  async function uploadMultipleFiles(files: FileList) {
+    const uploadPromises = Array.from(files).map(async (file) => {
+      const form = new FormData();
+      form.append('file', file);
+      const res = await fetch(`/api/projects/${id}/files`, { method: 'POST', body: form });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json?.error || 'Upload mislukt');
+      return json;
+    });
+
+    try {
+      setUploading(true);
+      setError("");
+      await Promise.all(uploadPromises);
+      await load();
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setUploading(false);
+    }
+  }
+
   async function downloadInvoice() {
     setGeneratingInvoice(true);
     setError("");
@@ -238,17 +289,46 @@ export default function ProjectDetailPage() {
     }
   }
 
-  if (loading) return <div className="p-6">Laden...</div>;
-  if (sessionStatus === 'loading') return <div className="p-6">Laden...</div>;
-  if (error) return <div className="p-6 text-red-600">{error}</div>;
-  if (!data) return null;
+  if (sessionStatus === 'loading') return (
+    <div className="w-full max-w-4xl mx-auto p-6">
+      <div className="text-white">Sessie laden...</div>
+    </div>
+  );
+  
+  if (!session?.user) return (
+    <div className="w-full max-w-4xl mx-auto p-6">
+      <div className="text-white">Niet ingelogd</div>
+    </div>
+  );
+  
+  if (loading) return (
+    <div className="w-full max-w-4xl mx-auto p-6">
+      <div className="text-white">Project laden...</div>
+    </div>
+  );
+  
+  if (error) return (
+    <div className="w-full max-w-4xl mx-auto p-6">
+      <div className="text-red-300 mb-4">Fout bij laden: {error}</div>
+      <button 
+        onClick={() => load()} 
+        className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-md border border-white/20 backdrop-blur-md transition"
+      >
+        Opnieuw proberen
+      </button>
+    </div>
+  );
+  
+  if (!data) return (
+    <div className="w-full max-w-4xl mx-auto p-6">
+      <div className="text-white">Geen project data gevonden</div>
+    </div>
+  );
 
   const isPopulatedClient = data?.clientId && typeof data.clientId === 'object';
   const clientName = isPopulatedClient ? (data.clientId.username || data.clientId.name || data.clientId.email) : '';
   const canSave = canSaveChanges();
   const isClient = ((session?.user as any)?.role) === 'klant';
-  
-
 
   return (
     <div className="w-full max-w-4xl mx-auto p-6 space-y-6">
@@ -256,21 +336,21 @@ export default function ProjectDetailPage() {
         <Breadcrumb>
           <BreadcrumbList>
             <BreadcrumbItem>
-              <BreadcrumbLink href="/dashboard">Dashboard</BreadcrumbLink>
+              <BreadcrumbLink href="/dashboard" className="text-white/80 hover:text-white">Dashboard</BreadcrumbLink>
             </BreadcrumbItem>
-            <BreadcrumbSeparator />
+            <BreadcrumbSeparator className="text-white/60" />
             <BreadcrumbItem>
-              <BreadcrumbPage>{data.name || 'Project'}</BreadcrumbPage>
+              <BreadcrumbPage className="text-white">{data.name || 'Project'}</BreadcrumbPage>
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
       </div>
       <div className="flex items-center justify-between">
         {isClient ? (
-          <h1 className="text-2xl font-semibold">{data.name}</h1>
+          <h1 className="text-2xl font-semibold text-white">{data.name}</h1>
         ) : (
           <input 
-            className="text-2xl font-semibold border-none outline-none bg-transparent" 
+            className="text-2xl font-semibold border-none outline-none bg-transparent text-white placeholder-white/60" 
             value={data.name || ''} 
             onChange={(e) => updateData('name', e.target.value)}
             placeholder="Project naam (verplicht)"
@@ -278,14 +358,14 @@ export default function ProjectDetailPage() {
         )}
         <div className="flex items-center gap-2">
           {isClient ? (
-            <div className="px-3 py-2 bg-gray-100 rounded-md text-sm font-medium">
+            <div className="px-3 py-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-md text-sm font-medium text-white">
               {data.status === 'open' && 'Open'}
               {data.status === 'in_progress' && 'In Progress'}
               {data.status === 'completed' && 'Voltooid'}
               {data.status === 'on_hold' && 'On Hold'}
             </div>
           ) : (
-            <select className="border rounded-md p-2" value={data.status} onChange={(e) => updateData('status', e.target.value)}>
+            <select className="border border-white/20 bg-white/10 backdrop-blur-md rounded-md p-2 text-white" value={data.status} onChange={(e) => updateData('status', e.target.value)}>
               <option value="open">Open</option>
               <option value="in_progress">In progress</option>
               <option value="completed">Completed</option>
@@ -296,13 +376,13 @@ export default function ProjectDetailPage() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <div className="border rounded-md p-3">
-          <div className="text-sm text-gray-500">Klant</div>
+        <div className="border border-white/20 bg-white/10 backdrop-blur-md rounded-md p-3">
+          <div className="text-sm text-white/70">Klant</div>
           {isClient ? (
-            <div className="font-medium">{clientName || 'Geen klant toegewezen'}</div>
+            <div className="font-medium text-white">{clientName || 'Geen klant toegewezen'}</div>
           ) : (
             <select 
-              className="border rounded-md p-1 w-full" 
+              className="border border-white/20 bg-white/10 backdrop-blur-md rounded-md p-1 w-full text-white" 
               value={data.clientId?._id || data.clientId || ''} 
               onChange={(e) => updateData('clientId', e.target.value)}
             >
@@ -315,44 +395,42 @@ export default function ProjectDetailPage() {
             </select>
           )}
         </div>
-        <div className="border rounded-md p-3">
-          <div className="text-sm text-gray-500">Developer(s)</div>
-          <div className="font-medium">
+        <div className="border border-white/20 bg-white/10 backdrop-blur-md rounded-md p-3">
+          <div className="text-sm text-white/70">Developer(s)</div>
+          <div className="font-medium text-white">
             {Array.isArray(data.assignedDevelopers) && data.assignedDevelopers.length > 0 
               ? data.assignedDevelopers.map((dev: any) => dev.username || dev.name || dev.email).join(', ')
               : 'Geen developers toegewezen'
             }
           </div>
         </div>
-        <div className="border rounded-md p-3">
-          <div className="text-sm text-gray-500">Budget</div>
+        <div className="border border-white/20 bg-white/10 backdrop-blur-md rounded-md p-3">
+          <div className="text-sm text-white/70">Budget</div>
           {isClient ? (
-            <div className="font-medium">
+            <div className="font-medium text-white">
               {data.budget ? `€${data.budget}` : 'Geen budget ingesteld'}
             </div>
           ) : (
             <input 
               type="number" 
-              className="border rounded-md p-1 w-full" 
+              className="border border-white/20 bg-white/10 backdrop-blur-md rounded-md p-1 w-full text-white placeholder-white/60" 
               placeholder="0.00"
               value={data.budget || ''} 
               onChange={(e) => updateData('budget', parseFloat(e.target.value) || null)}
             />
           )}
         </div>
-        <div className="border rounded-md p-3">
-          <div className="text-sm text-gray-500">Deadline</div>
+        <div className="border border-white/20 bg-white/10 backdrop-blur-md rounded-md p-3">
+          <div className="text-sm text-white/70">Deadline</div>
           {isClient ? (
-            <div className="font-medium">
+            <div className="font-medium text-white">
               {data.deadline ? new Date(data.deadline).toLocaleDateString() : 'Geen deadline'}
             </div>
           ) : (
-            <input type="date" className="border rounded-md p-1 w-full" value={data.deadline ? new Date(data.deadline).toISOString().slice(0,10) : ''} onChange={(e) => updateData('deadline', e.target.value)} />
+            <input type="date" className="border border-white/20 bg-white/10 backdrop-blur-md rounded-md p-1 w-full text-white" value={data.deadline ? new Date(data.deadline).toISOString().slice(0,10) : ''} onChange={(e) => updateData('deadline', e.target.value)} />
           )}
         </div>
       </div>
-
-
 
       <div className="space-y-2">
         <div 
@@ -360,39 +438,26 @@ export default function ProjectDetailPage() {
           onClick={() => setShowImages(!showImages)}
         >
           <div className="flex items-center gap-3">
-            <div className="text-lg font-semibold">Bestanden ({(data.files || []).length})</div>
+            <div className="text-lg font-semibold text-white">Bestanden ({(data.files || []).length})</div>
             <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
               <input 
                 type="file"
                 accept="image/*"
+                multiple
                 className="hidden"
                 id="files"
                 onChange={async (e) => {
-                  const file = e.target.files?.[0];
-                  if (!file) return;
-                  
-                  try {
-                    setUploading(true);
-                    setError("");
-                    const form = new FormData();
-                    form.append('file', file);
-                    const res = await fetch(`/api/projects/${id}/files`, { method: 'POST', body: form });
-                    const json = await res.json();
-                    if (!res.ok) throw new Error(json?.error || 'Upload mislukt');
-                    await load();
-                  } catch (e: any) {
-                    setError(e.message);
-                  } finally {
-                    setUploading(false);
-                  }
+                  const files = e.target.files;
+                  if (!files || files.length === 0) return;
+                  await uploadMultipleFiles(files);
                 }}
               />
-              <label htmlFor="files" className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm cursor-pointer">
-                {uploading ? 'Uploaden...' : 'Upload bestand'}
+              <label htmlFor="files" className="bg-white/20 hover:bg-white/30 text-white px-3 py-1 rounded text-sm cursor-pointer border border-white/20 backdrop-blur-md transition">
+                {uploading ? 'Uploaden...' : 'Upload bestand(en)'}
               </label>
             </div>
           </div>
-          <div className="text-sm text-gray-500">
+          <div className="text-sm text-white/70">
             {showImages ? '▼ Verbergen' : '▶ Tonen'}
           </div>
         </div>
@@ -408,58 +473,60 @@ export default function ProjectDetailPage() {
                 const canDeleteThisFile = !isClient || (currentUser && f.uploadedBy === currentUser._id);
                 
                 return (
-                  <div key={idx} className="relative border rounded-md p-2 bg-white group">
+                  <motion.div 
+                    key={idx} 
+                    className="relative border border-white/20 bg-white/10 backdrop-blur-md rounded-md p-2 group"
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.2, delay: idx * 0.05 }}
+                  >
                     {canDeleteThisFile && (
                       <button
                         onClick={() => deleteFile(idx)}
-                        className="absolute top-2 right-2 bg-gray-400 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-500 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10"
+                        className="absolute top-2 right-2 bg-red-500/80 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-500 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10 backdrop-blur-sm"
                         title="Verwijder afbeelding"
                       >
                         ×
                       </button>
                     )}
-                    <div className="mb-2 text-xs font-medium truncate pr-8">{f.filename || 'Afbeelding'}</div>
+                    <div className="mb-2 text-xs font-medium truncate pr-8 text-white">{f.filename || 'Afbeelding'}</div>
                     {imageSrc ? (
                       <img 
                         src={imageSrc} 
                         alt={f.filename || 'project-afbeelding'} 
-                        className="w-full h-32 object-cover rounded border cursor-pointer hover:opacity-90"
-                        onClick={() => window.open(imageSrc, '_blank')}
+                        className="w-full h-32 object-cover rounded border border-white/20 cursor-pointer hover:opacity-90 transition"
+                        onClick={() => setSelectedImage(imageSrc)}
                         onError={(e) => {
                           console.error('Image failed to load:', f._id || f.url);
                           e.currentTarget.style.display = 'none';
                         }}
                       />
                     ) : (
-                      <div className="w-full h-32 bg-gray-100 rounded border flex items-center justify-center text-gray-500 text-xs">
+                      <div className="w-full h-32 bg-white/5 rounded border border-white/20 flex items-center justify-center text-white/60 text-xs">
                         Geen afbeelding beschikbaar
                       </div>
                     )}
-                    <div className="mt-1 text-xs text-gray-500">
+                    <div className="mt-1 text-xs text-white/60">
                       {f.uploadedAt && new Date(f.uploadedAt).toLocaleDateString()}
                     </div>
-                  </div>
+                  </motion.div>
                 );
               })}
             </div>
             {(data.files || []).length === 0 && (
-              <div className="text-sm text-gray-500 text-center py-4">Geen bestanden</div>
+              <div className="text-sm text-white/60 text-center py-4">Geen bestanden</div>
             )}
           </>
         )}
-        
-
       </div>
-
-
 
       <div className="space-y-2">
         <div 
           className="flex items-center justify-between cursor-pointer" 
           onClick={() => setShowNotes(!showNotes)}
         >
-          <div className="text-lg font-semibold">Notities ({(data.notes || []).length})</div>
-          <div className="text-sm text-gray-500">
+          <div className="text-lg font-semibold text-white">Notities ({(data.notes || []).length})</div>
+          <div className="text-sm text-white/70">
             {showNotes ? '▼ Verbergen' : '▶ Tonen'}
           </div>
         </div>
@@ -468,7 +535,6 @@ export default function ProjectDetailPage() {
           <div className="grid gap-2">
             {(data.notes || []).slice().sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((n: any, originalIdx: number) => {
               // Find the original index in the unsorted array for deletion
-              const sortedNotes = (data.notes || []).slice().sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
               const actualIdx = (data.notes || []).findIndex((note: any) => 
                 note.text === n.text && new Date(note.date).getTime() === new Date(n.date).getTime()
               );
@@ -477,24 +543,24 @@ export default function ProjectDetailPage() {
               const canDeleteThisNote = !isClient || (currentUser && n.authorId === currentUser._id);
               
               return (
-                <div key={`${n.date}-${originalIdx}`} className="relative border rounded-md p-3 group">
+                <div key={`${n.date}-${originalIdx}`} className="relative border border-white/20 bg-white/10 backdrop-blur-md rounded-md p-3 group">
                   {canDeleteThisNote && (
                     <button
                       onClick={() => deleteNote(actualIdx)}
-                      className="absolute top-2 right-2 bg-gray-400 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-500 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                      className="absolute top-2 right-2 bg-red-500/80 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-500 opacity-0 group-hover:opacity-100 transition-opacity duration-200 backdrop-blur-sm"
                       title="Verwijder notitie"
                     >
                       ×
                     </button>
                   )}
-                  <div className="text-sm text-gray-500 pr-8">{new Date(n.date).toLocaleString()}</div>
-                  <div className="whitespace-pre-wrap">{n.text}</div>
+                  <div className="text-sm text-white/60 pr-8">{new Date(n.date).toLocaleString()}</div>
+                  <div className="whitespace-pre-wrap text-white">{n.text}</div>
                 </div>
               );
             })}
             <div className="grid gap-2">
               <textarea 
-                className="border rounded p-2" 
+                className="border border-white/20 bg-white/10 backdrop-blur-md rounded p-2 text-white placeholder-white/60" 
                 placeholder="Nieuwe notitie (wordt toegevoegd bij opslaan)" 
                 value={newNote} 
                 onChange={(e) => setNewNote(e.target.value)} 
@@ -507,11 +573,11 @@ export default function ProjectDetailPage() {
 
       {/* Invoice section - only show if project has client and required data */}
       {data.clientId && (
-        <div className="border rounded-md p-4 bg-gradient-to-r from-blue-50 to-indigo-50">
+        <div className="border border-white/20 bg-white/10 backdrop-blur-md rounded-md p-4">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-lg font-semibold text-blue-900">Factuur</h3>
-              <p className="text-sm text-blue-700">
+              <h3 className="text-lg font-semibold text-white">Factuur</h3>
+              <p className="text-sm text-white/80">
                 Genereer een PDF factuur voor dit project
                 {data.budget && ` (Bedrag: €${data.budget})`}
               </p>
@@ -519,7 +585,7 @@ export default function ProjectDetailPage() {
             <button
               onClick={downloadInvoice}
               disabled={generatingInvoice}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 border border-white/20 backdrop-blur-md transition"
             >
               {generatingInvoice ? (
                 <>
@@ -544,21 +610,21 @@ export default function ProjectDetailPage() {
         {!isClient && (
           <Popover open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
             <PopoverTrigger asChild>
-              <button className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700">
+              <button className="bg-red-500/80 text-white px-4 py-2 rounded-md hover:bg-red-500 border border-red-400/50 backdrop-blur-md transition">
                 Verwijderen
               </button>
             </PopoverTrigger>
-            <PopoverContent className="w-80">
+            <PopoverContent className="w-80 bg-white/10 backdrop-blur-xl border-white/20">
               <div className="space-y-4">
-                <h4 className="font-medium">Project verwijderen</h4>
-                <p className="text-sm text-gray-600">
+                <h4 className="font-medium text-white">Project verwijderen</h4>
+                <p className="text-sm text-white/80">
                   Weet je zeker dat je dit project wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt.
                 </p>
                 <div className="flex gap-2">
-                  <Button variant="outline" onClick={() => setShowDeleteConfirm(false)}>
+                  <Button variant="outline" onClick={() => setShowDeleteConfirm(false)} className="border-white/20 text-white hover:bg-white/10">
                     Annuleren
                   </Button>
-                  <Button variant="destructive" onClick={deleteProject}>
+                  <Button variant="destructive" onClick={deleteProject} className="bg-red-500/80 hover:bg-red-500">
                     Verwijderen
                   </Button>
                 </div>
@@ -569,11 +635,50 @@ export default function ProjectDetailPage() {
         <button 
           onClick={saveChanges} 
           disabled={saving || !canSave}
-          className="bg-blue-600 text-white px-6 py-2 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+          className="bg-white/20 hover:bg-white/30 text-white px-6 py-2 rounded-md disabled:opacity-50 disabled:cursor-not-allowed border border-white/20 backdrop-blur-md transition"
         >
           {saving ? 'Opslaan...' : 'Opslaan'}
         </button>
       </div>
+
+      {/* Image Modal */}
+      <AnimatePresence>
+        {selectedImage && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setSelectedImage(null)}
+          >
+            <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+            <motion.div
+              className="fixed top-4 left-4 z-10"
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
+            >
+              <button
+                onClick={() => setSelectedImage(null)}
+                className="inline-flex items-center gap-2 border border-white/20 rounded-lg px-3 py-1.5 text-sm text-white hover:text-white/90 bg-white/10 hover:bg-white/15 backdrop-blur-md transition"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Terug
+              </button>
+            </motion.div>
+            <motion.img
+              src={selectedImage}
+              alt="Enlarged project image"
+              className="relative max-w-full max-h-full object-contain rounded-lg border border-white/20"
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+              onClick={(e) => e.stopPropagation()}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

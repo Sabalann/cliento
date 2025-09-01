@@ -91,11 +91,12 @@ export default function SettingsPage() {
   if (loading) return <p className="text-sm text-muted-foreground">Laden...</p>;
 
   return (
-    <div className="max-w-3xl">
-      <h1 className="text-2xl font-semibold mb-4">Account & Facturatie</h1>
+    <div className="w-full max-w-4xl mx-auto p-6 space-y-6">
+      <div className="relative rounded-2xl border border-white/20 p-6 shadow-lg bg-white/10 backdrop-blur-xl">
+      <h1 className="text-2xl font-semibold mb-4 text-white">Account & Facturatie</h1>
       <form onSubmit={onSubmit} className="space-y-6">
-        {error && <p className="text-sm text-red-600">{error}</p>}
-        {success && <p className="text-sm text-green-600">{success}</p>}
+        {error && <p className="text-sm text-red-300">{error}</p>}
+        {success && <p className="text-sm text-green-300">{success}</p>}
 
         <div className="flex items-center gap-4">
           <Avatar className="h-16 w-16">
@@ -137,15 +138,15 @@ export default function SettingsPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm mb-1" htmlFor="username">Gebruikersnaam</label>
-            <Input id="username" name="username" value={form.username} onChange={onChange} />
+            <label className="block text-sm mb-1 text-white/90" htmlFor="username">Gebruikersnaam</label>
+            <Input id="username" name="username" value={form.username} onChange={onChange} placeholder="Voer je gebruikersnaam in" />
           </div>
           <div>
-            <label className="block text-sm mb-1" htmlFor="email">E-mail</label>
-            <Input id="email" name="email" type="email" value={form.email} onChange={onChange} />
+            <label className="block text-sm mb-1 text-white/90" htmlFor="email">E-mail</label>
+            <Input id="email" name="email" type="email" value={form.email} onChange={onChange} placeholder="voer@email.adres.in" />
           </div>
           <div className="md:col-span-2">
-            <label className="block text-sm mb-1" htmlFor="newPassword">Nieuw wachtwoord</label>
+            <label className="block text-sm mb-1 text-white/90" htmlFor="newPassword">Nieuw wachtwoord</label>
             <Input id="newPassword" name="newPassword" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Laat leeg om niet te wijzigen" />
           </div>
         </div>
@@ -154,32 +155,32 @@ export default function SettingsPage() {
           <h2 className="text-lg font-medium mb-3">Bedrijfsinformatie</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm mb-1" htmlFor="companyName">Bedrijfsnaam</label>
-              <Input id="companyName" name="companyName" value={form.companyName || ""} onChange={onChange} />
+              <label className="block text-sm mb-1 text-white/90" htmlFor="companyName">Bedrijfsnaam</label>
+              <Input id="companyName" name="companyName" value={form.companyName || ""} onChange={onChange} placeholder="Voer bedrijfsnaam in" />
             </div>
             <div>
-              <label className="block text-sm mb-1" htmlFor="BTWNumber">BTW-nummer</label>
-              <Input id="BTWNumber" name="BTWNumber" value={form.BTWNumber || ""} onChange={onChange} />
+              <label className="block text-sm mb-1 text-white/90" htmlFor="BTWNumber">BTW-nummer</label>
+              <Input id="BTWNumber" name="BTWNumber" value={form.BTWNumber || ""} onChange={onChange} placeholder="NL123456789B01" />
             </div>
             <div>
-              <label className="block text-sm mb-1" htmlFor="KVKNumber">KVK-nummer</label>
-              <Input id="KVKNumber" name="KVKNumber" value={form.KVKNumber || ""} onChange={onChange} />
+              <label className="block text-sm mb-1 text-white/90" htmlFor="KVKNumber">KVK-nummer</label>
+              <Input id="KVKNumber" name="KVKNumber" value={form.KVKNumber || ""} onChange={onChange} placeholder="12345678" />
             </div>
             <div>
-              <label className="block text-sm mb-1" htmlFor="phoneNumber">Telefoonnummer</label>
-              <Input id="phoneNumber" name="phoneNumber" value={form.phoneNumber || ""} onChange={onChange} />
+              <label className="block text-sm mb-1 text-white/90" htmlFor="phoneNumber">Telefoonnummer</label>
+              <Input id="phoneNumber" name="phoneNumber" value={form.phoneNumber || ""} onChange={onChange} placeholder="+31 6 12345678" />
             </div>
             <div>
-              <label className="block text-sm mb-1" htmlFor="postalCode">Postcode</label>
-              <Input id="postalCode" name="postalCode" value={form.postalCode || ""} onChange={onChange} />
+              <label className="block text-sm mb-1 text-white/90" htmlFor="postalCode">Postcode</label>
+              <Input id="postalCode" name="postalCode" value={form.postalCode || ""} onChange={onChange} placeholder="1234 AB" />
             </div>
             <div>
-              <label className="block text-sm mb-1" htmlFor="city">Stad</label>
-              <Input id="city" name="city" value={form.city || ""} onChange={onChange} />
+              <label className="block text-sm mb-1 text-white/90" htmlFor="city">Stad</label>
+              <Input id="city" name="city" value={form.city || ""} onChange={onChange} placeholder="Amsterdam" />
             </div>
             <div className="md:col-span-2">
-              <label className="block text-sm mb-1" htmlFor="country">Land</label>
-              <Input id="country" name="country" value={form.country || ""} onChange={onChange} />
+              <label className="block text-sm mb-1 text-white/90" htmlFor="country">Land</label>
+              <Input id="country" name="country" value={form.country || ""} onChange={onChange} placeholder="Nederland" />
             </div>
           </div>
         </div>
@@ -201,6 +202,7 @@ export default function SettingsPage() {
           />
         </div>
       </form>
+      </div>
     </div>
   );
 }
